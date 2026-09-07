@@ -54,7 +54,7 @@ async def resolve_client(ctx, connection_id: str = "") -> NotarizeClient:
     effects=["create:connection"],
     data_model=ConnectionRecord
 )
-async def connect_notarize(params: ConnectParams, ctx) -> ActionResult[ConnectionRecord]:
+async def connect_notarize(ctx, params: ConnectParams) -> ActionResult[ConnectionRecord]:
     client = NotarizeClient(api_key=params.api_key, base_url=params.base_url)
     res = await client.verify_auth()
     if res.get("status") == "error":
@@ -85,7 +85,7 @@ async def connect_notarize(params: ConnectParams, ctx) -> ActionResult[Connectio
     effects=["read:connections"],
     data_model=ConnectionList
 )
-async def list_connections(params: NoParams, ctx) -> ActionResult[ConnectionList]:
+async def list_connections(ctx, params: NoParams) -> ActionResult[ConnectionList]:
     conns = await _load_connections(ctx)
     recs = [ConnectionRecord(**c) for c in conns]
     return ActionResult.success(ConnectionList(connections=recs, total=len(recs)), summary=f"Found {len(recs)} Notarize connection(s).")
@@ -99,7 +99,7 @@ async def list_connections(params: NoParams, ctx) -> ActionResult[ConnectionList
     effects=["delete:connection"],
     data_model=DeleteResult
 )
-async def disconnect_notarize(params: ConnectionIdParams, ctx) -> ActionResult[DeleteResult]:
+async def disconnect_notarize(ctx, params: ConnectionIdParams) -> ActionResult[DeleteResult]:
     conns = await _load_connections(ctx)
     if not conns:
         return ActionResult.success(DeleteResult(success=True, message="No active connections to disconnect."), summary="Nothing to disconnect.")
