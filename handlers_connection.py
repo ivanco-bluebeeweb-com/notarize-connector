@@ -74,7 +74,7 @@ async def connect_notarize(params: ConnectParams, ctx) -> ActionResult[Connectio
         c["is_active"] = False
     conns.append(record)
     await _save_connections(ctx, conns)
-    return ActionResult.ok(ConnectionRecord(**record), summary=f"Connected to Notarize ({record['label']}).")
+    return ActionResult.success(ConnectionRecord(**record), summary=f"Connected to Notarize ({record['label']}).")
 
 @chat.function(
     "list_connections",
@@ -88,7 +88,7 @@ async def connect_notarize(params: ConnectParams, ctx) -> ActionResult[Connectio
 async def list_connections(params: NoParams, ctx) -> ActionResult[ConnectionList]:
     conns = await _load_connections(ctx)
     recs = [ConnectionRecord(**c) for c in conns]
-    return ActionResult.ok(ConnectionList(connections=recs, total=len(recs)), summary=f"Found {len(recs)} Notarize connection(s).")
+    return ActionResult.success(ConnectionList(connections=recs, total=len(recs)), summary=f"Found {len(recs)} Notarize connection(s).")
 
 @chat.function(
     "disconnect_notarize",
@@ -102,10 +102,10 @@ async def list_connections(params: NoParams, ctx) -> ActionResult[ConnectionList
 async def disconnect_notarize(params: ConnectionIdParams, ctx) -> ActionResult[DeleteResult]:
     conns = await _load_connections(ctx)
     if not conns:
-        return ActionResult.ok(DeleteResult(success=True, message="No active connections to disconnect."), summary="Nothing to disconnect.")
+        return ActionResult.success(DeleteResult(success=True, message="No active connections to disconnect."), summary="Nothing to disconnect.")
     if params.connection_id:
         conns = [c for c in conns if c.get("id") != params.connection_id]
     else:
         conns = []
     await _save_connections(ctx, conns)
-    return ActionResult.ok(DeleteResult(success=True, message="Disconnected Notarize."), summary="Disconnected connection.")
+    return ActionResult.success(DeleteResult(success=True, message="Disconnected Notarize."), summary="Disconnected connection.")
