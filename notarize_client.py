@@ -10,7 +10,7 @@ class NotarizeClient:
         self.api_key = api_key.strip()
         self.base_url = (base_url.strip() if base_url else DEFAULT_BASE).rstrip("/")
         self.headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "ApiKey": self.api_key,
             "Content-Type": "application/json",
             "User-Agent": "Imperal-Notarize-Connector/1.0.0"
         }
@@ -19,7 +19,7 @@ class NotarizeClient:
     async def verify_auth(self) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
-                resp = await client.get(f"{self.base_url}/agreements", headers=self.headers)
+                resp = await client.get(f"{self.base_url}/transactions", headers=self.headers)
                 if resp.status_code in (200, 201, 204):
                     return {"status": "ok", "data": resp.json() if resp.content else {}}
                 if resp.status_code in (401, 403):
@@ -33,7 +33,7 @@ class NotarizeClient:
             params = {}
             if status:
                 params["status"] = status
-            resp = await client.get(f"{self.base_url}/agreements", headers=self.headers, params=params)
+            resp = await client.get(f"{self.base_url}/transactions", headers=self.headers, params=params)
             if resp.status_code == 200:
                 data = resp.json()
                 if isinstance(data, list):
@@ -47,7 +47,7 @@ class NotarizeClient:
 
     async def get_agreement(self, agreement_id: str) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=self.timeout) as client:
-            resp = await client.get(f"{self.base_url}/agreements/{agreement_id}", headers=self.headers)
+            resp = await client.get(f"{self.base_url}/transactions/{agreement_id}", headers=self.headers)
             if resp.status_code == 200:
                 return resp.json()
             return {"id": agreement_id, "error": f"HTTP {resp.status_code}"}
@@ -60,12 +60,12 @@ class NotarizeClient:
                 "recipient": {"email": recipient_email, "name": recipient_name or recipient_email},
                 "message": message or "Please review and sign this document."
             }
-            resp = await client.post(f"{self.base_url}/agreements", headers=self.headers, json=payload)
+            resp = await client.post(f"{self.base_url}/transactions", headers=self.headers, json=payload)
             if resp.status_code in (200, 201):
                 return resp.json()
             return {"id": f"mock_sig_{recipient_email}", "status": "sent", "title": title}
 
     async def cancel_signature_request(self, agreement_id: str, reason: str = "") -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=self.timeout) as client:
-            resp = await client.delete(f"{self.base_url}/agreements/{agreement_id}", headers=self.headers)
+            resp = await client.delete(f"{self.base_url}/transactions/{agreement_id}", headers=self.headers)
             return {"id": agreement_id, "status": "canceled", "reason": reason}
